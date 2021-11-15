@@ -9,7 +9,7 @@ use std::env;
 // use rocket::tokio::time::{sleep, Duration};
 //
 // mod schema;
-//
+// mod todo;
 //
 // fn hello_world(){
 //     println!("Hello, world!");
@@ -43,6 +43,9 @@ pub fn establish_connection() -> PgConnection{
     PgConnection::establish(&database_url)
         .expect(&format!("Error connecting to {}", database_url))
 }
+
+#[database("postgresql_database")]
+pub struct DbConn(diesel::PgConnection);
 
 #[launch]
 fn rocket() -> _ {
