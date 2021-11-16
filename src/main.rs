@@ -1,11 +1,15 @@
+
 #[macro_use]
 extern crate rocket;
 // #[macro_use] extern crate diesel;
 // #[macro_use] extern crate dotenv;
 
+mod auth;
+
+
 use rocket::response::status;
 use rocket::serde::json::serde_json::{Value, json};
-
+use auth::BasicAuth;
 // use diesel::prelude::*;
 // use diesel::pg::PgConnection;
 // use dotenv::dotenv;
@@ -18,6 +22,8 @@ use rocket::serde::json::serde_json::{Value, json};
 // fn hello_world(){
 //     println!("Hello, world!");
 // }
+
+
 
 // #[get("/")]
 // fn index() -> &'static str {
@@ -57,7 +63,7 @@ fn hello() -> Value {
 //
 
 #[get("/todo")]
-fn get_todo() -> Value {
+fn get_todo(_auth: BasicAuth) -> Value {
     json!([{
 "id": "11883816-d6d7-4d9a-95ad-cea83930413e",
 "description": "Testing todo controller before publish",
@@ -119,6 +125,11 @@ fn not_found() -> Value{
     json!("Not found")
 }
 
+#[catch(401)]
+fn unauthorized() -> Value {
+    json!("Invalid/Missing authorization")
+}
+
 #[launch]
 fn rocket() -> _ {
     // establish_connection();
@@ -129,5 +140,5 @@ fn rocket() -> _ {
         create_todo,
         update_todo,
         delete_todo
-    ]).register("/", catchers![not_found])
+    ]).register("/", catchers![not_found,unauthorized])
 }
