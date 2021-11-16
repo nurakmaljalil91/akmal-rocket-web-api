@@ -114,6 +114,10 @@ fn delete_todo() -> status::NoContent {
     status::NoContent
 }
 
+#[catch(404)]
+fn not_found() -> Value{
+    json!("Not found")
+}
 
 #[launch]
 fn rocket() -> _ {
@@ -125,5 +129,5 @@ fn rocket() -> _ {
         create_todo,
         update_todo,
         delete_todo
-    ])
+    ]).register("/", catchers![not_found])
 }
