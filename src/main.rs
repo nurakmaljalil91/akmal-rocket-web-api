@@ -2,24 +2,22 @@
 extern crate rocket;
 #[macro_use]
 extern crate diesel;
-#[macro_use]
 extern crate dotenv;
 
-mod auth;
+// mod auth;
 mod models;
 mod schema;
 
 use rocket::response::status;
 use rocket::serde::json::serde_json::{Value, json};
-use auth::BasicAuth;
+use rocket::serde::json::Json;
+// use auth::BasicAuth;
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
 use std::env;
-use diesel::types::Json;
 use crate::schema::todo::dsl::todo;
-use crate::models::Todo;
-// use crate::schema::todo::dsl::todo;
+use crate::models::{CustomResponse, Todo};
 
 
 #[get("/")]
@@ -42,16 +40,15 @@ pub fn establish_connection() -> PgConnection {
 }
 
 #[get("/todo")]
-fn get_todo() -> Value {
+fn get_todo() -> Json<Vec<Todo>> {
 
     let connection = establish_connection();
 
 
-        let all = todo.limit(100).load::<Todo>(&connection)
+    let all = todo.limit(100).load::<Todo>(&connection)
             .expect("Error loading todo");
-        json!(all)
 
-
+    Json(all)
 }
 
 #[get("/todo/<id>")]
@@ -91,19 +88,29 @@ fn delete_todo() -> status::NoContent {
 }
 
 #[catch(404)]
-fn not_found() -> Value {
-    json!("Not found")
+fn not_found() -> Json<CustomResponse> {
+    let response = CustomResponse{
+        status_code: 404,
+        message: "Route Not Found!",
+    };
+
+    Json(response)
 }
 
 #[catch(401)]
-fn unauthorized() -> Value {
-    json!("Invalid/Missing authorization")
+fn unauthorized() -> Json<CustomResponse> {
+    let response = CustomResponse{
+        status_code: 401,
+        message: "Unauthorized!",
+    };
+
+    Json(response)
 }
 
 #[launch]
 fn rocket() -> _ {
     // establish_connection();
-    rocket::build().mount("/", routes![
+    rocket::build().mount("/api/v1", routes![
         hello,
         get_todo,
         get_single_todo,
