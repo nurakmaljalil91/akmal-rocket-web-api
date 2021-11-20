@@ -17,7 +17,8 @@ pub struct Todo{
     pub complete: bool
 }
 
-#[derive(Debug, FromForm)]
+#[derive(Insertable,Deserialize, Debug)]
+#[table_name="todo"]
 pub struct NewTodo {
     pub name: String
 }

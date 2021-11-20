@@ -11,13 +11,15 @@ mod schema;
 use rocket::response::status;
 use rocket::serde::json::serde_json::{Value, json};
 use rocket::serde::json::Json;
+use rocket::form::Form;
 // use auth::BasicAuth;
 use diesel::prelude::*;
 use diesel::pg::PgConnection;
 use dotenv::dotenv;
 use std::env;
-use crate::schema::todo::dsl::todo;
-use crate::models::{CustomResponse, Todo};
+use crate::schema::todo::dsl::*;
+use crate::schema::todo;
+use crate::models::{CustomResponse, NewTodo, Todo};
 
 
 #[get("/")]
@@ -41,45 +43,53 @@ pub fn establish_connection() -> PgConnection {
 
 #[get("/todo")]
 fn get_todo() -> Json<Vec<Todo>> {
-
     let connection = establish_connection();
 
 
     let all = todo.limit(100).load::<Todo>(&connection)
-            .expect("Error loading todo");
+        .expect("Error loading todo");
 
     Json(all)
 }
 
-#[get("/todo/<id>")]
-fn get_single_todo(id: i32) -> Value {
-    json!({
-"id": id,
-"description": "Testing todo controller before publish",
-"complete": true,
-"createdDate": "2020-11-18T16:22:08.304015+08:00"
-})
+#[get("/todo/<other_id>")]
+fn get_single_todo(other_id: i32) -> Json<Todo> {
+    let connection = establish_connection();
+
+    let single_todo = todo
+        .filter(id.eq(other_id))
+        .first(&connection)
+        .expect("Error loading todo");
+
+
+    Json(single_todo)
 }
 
-#[post("/todo", format = "json")]
-fn create_todo() -> Value {
-    json!({
-"id": "4dddc472-38f2-422d-b95a-3d464664a054",
-"description": "Deploy personal web app ",
-"complete": true,
-"createdDate": "2020-11-19T16:16:18.383904+08:00"
-})
+#[post("/todo", data = "<todo_form>")]
+fn create_todo(todo_form: Json<NewTodo>) -> Json<CustomResponse> {
+    let connection = establish_connection();
+
+    diesel::insert_into(todo::table)
+        .values(&*todo_form)
+        .execute(&connection)
+        .expect("Error saving new todo");
+
+    let response = CustomResponse {
+        status_code: 200,
+        message: "Insert successful!",
+    };
+    Json(response)
 }
 
-#[put("/todo/<id>", format = "json")]
-fn update_todo(id: i32) -> Value {
-    json!({
-"id": id,
-"description": "Deploy personal web app ",
-"complete": true,
-"createdDate": "2020-11-19T16:16:18.383904+08:00"
-})
-}
+// #[put("/todo/<id>", format = "json")]
+// fn update_todo(id: i32) -> Value {
+//     json!({
+// "id": id,
+// "description": "Deploy personal web app ",
+// "complete": true,
+// "createdDate": "2020-11-19T16:16:18.383904+08:00"
+// })
+// }
 
 
 #[delete("/todo")]
@@ -89,7 +99,7 @@ fn delete_todo() -> status::NoContent {
 
 #[catch(404)]
 fn not_found() -> Json<CustomResponse> {
-    let response = CustomResponse{
+    let response = CustomResponse {
         status_code: 404,
         message: "Route Not Found!",
     };
@@ -99,7 +109,7 @@ fn not_found() -> Json<CustomResponse> {
 
 #[catch(401)]
 fn unauthorized() -> Json<CustomResponse> {
-    let response = CustomResponse{
+    let response = CustomResponse {
         status_code: 401,
         message: "Unauthorized!",
     };
@@ -115,7 +125,6 @@ fn rocket() -> _ {
         get_todo,
         get_single_todo,
         create_todo,
-        update_todo,
         delete_todo
     ]).register("/", catchers![not_found,unauthorized])
 }
