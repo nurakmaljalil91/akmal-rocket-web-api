@@ -8,6 +8,15 @@ pub struct CustomResponse{
     pub message: &'static str
 }
 
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct ProjectResponse{
+    pub author: &'static str,
+    pub version: &'static str,
+    pub name: &'static str,
+    pub details: &'static str
+}
+
 #[derive(Queryable, AsChangeset, Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 #[table_name="todo"]

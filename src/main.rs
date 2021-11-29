@@ -19,16 +19,18 @@ use dotenv::dotenv;
 use std::env;
 use crate::schema::todo::dsl::*;
 use crate::schema::todo;
-use crate::models::{CustomResponse, NewTodo, Todo};
+use crate::models::{CustomResponse, NewTodo, ProjectResponse, Todo};
 
 
 #[get("/")]
-fn hello() -> Value {
-    json!(
-        {
-            "name": "Akmal Web API with Rust",
-            "version": 0.1
-        })
+fn hello() -> Json<ProjectResponse> {
+    let project_response = ProjectResponse {
+        name: "Akmal Web API with Rust",
+        version: "0.1",
+        author: "Nur Akmal Bin Jalil",
+        details: "simple web api",
+    };
+    Json(project_response)
 }
 
 pub fn establish_connection() -> PgConnection {
